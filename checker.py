@@ -29,9 +29,10 @@ def fetch_page(url: str) -> str:
     return response.text
 
 def is_out_of_stock(html: str) -> bool:
-    soup = BeautifulSoup(html, "html.parser")
-    text = soup.get_text(" ", strip=True).lower()
-    return TARGET_TEXT.lower() in text
+    return (
+        "This product is currently not available for purchase." in html
+        or "This product is out of stock. You cannot add it to your bag." in html
+    )
 
 def main():
     send_telegram_message("workflow started")
