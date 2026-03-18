@@ -34,6 +34,7 @@ def is_out_of_stock(html: str) -> bool:
     return TARGET_TEXT.lower() in text
 
 def main():
+    send_telegram_message("workflow started")
     html = fetch_page(URL)
     if not is_out_of_stock(html):
         send_telegram_message(f"Похоже, товар появился в наличии: {URL}")
