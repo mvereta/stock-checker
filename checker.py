@@ -46,11 +46,8 @@ def main() -> None:
 
     if not is_out_of_stock(html):
         send_telegram_message(f"Похоже, товар появился в наличии: {URL}")
-        with open("log.txt", "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now().strftime('%H:%M')}] in stock!!!!!!!!!!!!!!!!!!\n")
     else:
-        with open("log.txt", "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now().strftime('%H:%M')}] out of stock\n")
+        send_telegram_message(f"out of stock")
 
 
 if __name__ == "__main__":
