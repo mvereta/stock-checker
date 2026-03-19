@@ -1,14 +1,17 @@
 import os
 import requests
-from bs4 import BeautifulSoup
+import time
+import random
+from playwright.sync_api import sync_playwright
+from datetime import datetime
 
 URL = "https://eu.bungiestore.com/products/marathon-collector-s-edition-no-game-code/MAC24001-100"
-TARGET_TEXT = "out of stock"
 
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 
-def send_telegram_message(text: str):
+
+def send_telegram_message(text: str) -> None:
     response = requests.post(
         f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
         data={"chat_id": CHAT_ID, "text": text},
@@ -16,32 +19,42 @@ def send_telegram_message(text: str):
     )
     response.raise_for_status()
 
-def fetch_page(url: str) -> str:
-    headers = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/122.0.0.0 Safari/537.36"
-        )
-    }
-    response = requests.get(url, headers=headers, timeout=30)
-    response.raise_for_status()
-    return response.text
+
+def fetch_rendered_html(url: str) -> str:
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+
+        page.goto(url, wait_until="networkidle", timeout=60000)
+        page.wait_for_timeout(5000)
+
+        html = page.content()
+        browser.close()
+        return html
+
 
 def is_out_of_stock(html: str) -> bool:
+    html = html.lower()
     return (
-        "This product is currently not available for purchase." in html
-        or "This product is out of stock. You cannot add it to your bag." in html
+        "this product is currently not available for purchase." in html
+        or "this product is out of stock. you cannot add it to your bag." in html
     )
 
-def main():
-    send_telegram_message("workflow started")
-    html = fetch_page(URL)
+
+def main() -> None:
+    html = fetch_rendered_html(URL)
+
     if not is_out_of_stock(html):
         send_telegram_message(f"Похоже, товар появился в наличии: {URL}")
+        with open("log.txt", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().strftime('%H:%M')}] in stock!!!!!!!!!!!!!!!!!!\n")
     else:
-        send_telegram_message(f"Пока еще out of stock")
-        ##print("Пока еще out of stock")
+        with open("log.txt", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now().strftime('%H:%M')}] out of stock\n")
+
 
 if __name__ == "__main__":
-    main()
+    while True:
+        main()
+        sleep_seconds = random.randint(300, 600)
+        time.sleep(sleep_seconds)
