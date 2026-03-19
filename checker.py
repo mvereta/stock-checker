@@ -52,5 +52,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    sleep_seconds = random.randint(300, 600)
-    time.sleep(sleep_seconds)
